@@ -7,8 +7,8 @@ import java.util.List;
 @Mapper
 public interface SeckillOrderMapper {
 
-    @Insert("insert into seckill_order(user_id, product_id, activity_id, status, create_time) " +
-            "values(#{userId}, #{productId}, #{activityId}, #{status}, #{createTime})")
+    @Insert("insert into seckill_order(user_id, product_id, activity_id) " +
+            "values(#{userId}, #{productId}, #{activityId})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(SeckillOrder order);
 
