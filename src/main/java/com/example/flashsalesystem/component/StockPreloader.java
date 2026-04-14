@@ -4,6 +4,7 @@ import com.example.flashsalesystem.entity.SeckillProduct;
 import com.example.flashsalesystem.service.SeckillOrderService;
 import com.example.flashsalesystem.service.SeckillProductService;
 import com.example.flashsalesystem.service.SeckillService;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -21,6 +22,7 @@ public class StockPreloader implements ApplicationRunner {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
 
 
     public void run(ApplicationArguments args) throws Exception {
