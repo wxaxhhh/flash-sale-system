@@ -2,16 +2,16 @@ package com.example.flashsalesystem.service;
 import com.example.flashsalesystem.entity.SeckillOrder;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.redisson.api.RLock;
 import java.util.concurrent.TimeUnit;
+
 @Service
 public class SeckillService {
     @Autowired
@@ -25,10 +25,22 @@ public class SeckillService {
     @Autowired
     private RedissonClient redissonClient;
 
+    @Autowired
+    private static final String LUA_SCRIPT =
+            "local key = KEYS[1] " +
+                    "local stock = redis.call('get', key) " +
+                    "if stock and tonumber(stock) > 0 then " +
+                    "    redis.call('decr', key) " +
+                    "    return 1 " +
+                    "else " +
+                    "    return 0 " +
+                    "end";
+
+    private final DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(LUA_SCRIPT, Long.class);
 
 
     @Transactional
-    public Map<String,Object> executeSeckill(Map<String,Object> params){
+    public Map<String,Object> executeSeckill(Map<String,Object> params) throws InterruptedException{
         Map<String,Object> result = new HashMap<>();
         Long userId= ((Number)params.get("userId")).longValue();
         Long activityId= ((Number)params.get("activityId")).longValue();
@@ -50,12 +62,14 @@ public class SeckillService {
                     if (exist == null) {
                         // 扣库存
                         System.out.println("准备扣库存，key: product_stock:" + productId);
-                        Long remain = redisTemplate.opsForValue().decrement("product_stock:" + productId);
-                        Thread.sleep(1000); // 睡 3 秒
-                        System.out.println("扣库存完成，剩余: " + remain);
-                        if (remain < 0) {
+                        String key = "product_stock:" + productId;
+                        Long luaResult = redisTemplate.execute(redisScript, Collections.singletonList(key));
+                        System.out.println("Lua 执行结果: " + luaResult);
+                        System.out.println("扣库存完成，剩余: " + redisTemplate.opsForValue().get(key));
+                        if (luaResult == null || luaResult == 0) {
                             result.put("code", 500);
                             result.put("status", "fail");
+                            result.put("msg", "库存不足");
                             return result;
                         }else {
                             SeckillOrder seckillOrder = new SeckillOrder();

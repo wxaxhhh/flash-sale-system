@@ -11,7 +11,7 @@ public class SeckillController {
     @Autowired
     private SeckillService seckillService;
     @PostMapping("/execute")
-    public Map<String,Object> executeSeckill(@RequestBody Map<String,Object> params){
+    public Map<String,Object> executeSeckill(@RequestBody Map<String,Object> params)throws InterruptedException{
         return seckillService.executeSeckill(params);
     }
 
