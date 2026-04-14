@@ -1,8 +1,9 @@
 package com.example.flashsalesystem.entity;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class SeckillOrder {
+public class SeckillOrder implements Serializable {
     private Long id;
     private Long userId;
     private Long productId;

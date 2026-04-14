@@ -1,6 +1,8 @@
 package com.example.flashsalesystem.service;
 import com.example.flashsalesystem.entity.SeckillOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,9 @@ public class SeckillService {
     private SeckillProductService seckillProductService;
     @Autowired
     private SeckillActivityService seckillActivityService;
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
 
     @Transactional
     public Map<String,Object> executeSeckill(Map<String,Object> params){
@@ -25,23 +30,26 @@ public class SeckillService {
         Long productId= ((Number)params.get("productId")).longValue();
         try {
             Integer Status = seckillActivityService.findById(activityId).getStatus();
-            Integer stock = seckillProductService.findById(productId).getStock();
 
             if (Status == 2) {
-                if(stock>0){
-                    if(seckillOrderService.findByUserActivityProduct(userId,activityId,productId)==null){
-                        seckillProductService.updateStock(productId, stock - 1);
-                        SeckillOrder seckillOrder = new SeckillOrder();
-                        seckillOrder.setActivityId(activityId);
-                        seckillOrder.setUserId(userId);
-                        seckillOrder.setProductId(productId);
-                        seckillOrderService.add(seckillOrder);
-                        result.put("code", 200);
-                        result.put("status","success");
-                        result.put("orderId",seckillOrder.getId());
+                    if(seckillOrderService.findByUserActivityProduct(userId,activityId,productId)==null) {
+                        Long remain = redisTemplate.opsForValue().decrement("product_stock:" + productId);
+                        if (remain < 0) {
+                            result.put("code", 500);
+                            result.put("status", "fail");
+                            return result;
+                        } else {
+                            SeckillOrder seckillOrder = new SeckillOrder();
+                            seckillOrder.setActivityId(activityId);
+                            seckillOrder.setUserId(userId);
+                            seckillOrder.setProductId(productId);
+                            seckillOrderService.add(seckillOrder);
+                            result.put("code", 200);
+                            result.put("status", "success");
+                            result.put("orderId", seckillOrder.getId());
+                        }
                     }
 
-                }
 
             }
         }catch (Exception e){

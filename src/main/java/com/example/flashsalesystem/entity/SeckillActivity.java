@@ -1,8 +1,9 @@
 package com.example.flashsalesystem.entity;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class SeckillActivity {
+public class SeckillActivity implements Serializable {
     Long id;
     String name;
     LocalDateTime startTime;

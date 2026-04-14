@@ -1,9 +1,10 @@
 package com.example.flashsalesystem.entity;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public class SeckillProduct {
+public class SeckillProduct implements Serializable{
     private Long id;
     private Long activityId;
     private String name;
