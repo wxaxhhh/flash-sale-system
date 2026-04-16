@@ -2,28 +2,25 @@ package com.example.flashsalesystem.mapper;
 
 import com.example.flashsalesystem.entity.SeckillOrder;
 import org.apache.ibatis.annotations.*;
+
 import java.util.List;
 
 @Mapper
 public interface SeckillOrderMapper {
 
-    @Insert("insert into seckill_order(user_id, product_id, activity_id) " +
-            "values(#{userId}, #{productId}, #{activityId})")
+    @Insert("INSERT INTO seckill_order(user_id, activity_id, product_id, status, create_time) VALUES(#{userId}, #{activityId}, #{productId}, 0, NOW())")
     @Options(useGeneratedKeys = true, keyProperty = "id")
-    void insert(SeckillOrder order);
+    int insert(SeckillOrder order);
 
-    @Select("select * from seckill_order where id = #{id}")
-    SeckillOrder findById(Long id);
+    @Select("SELECT * FROM seckill_order WHERE id = #{id}")
+    SeckillOrder selectById(Long id);
 
-    @Select("select * from seckill_order where user_id = #{userId}")
-    List<SeckillOrder> findByUserId(Long userId);
+    @Update("UPDATE seckill_order SET status = #{status} WHERE id = #{id}")
+    void updateById(SeckillOrder order);
 
-    @Select("select * from seckill_order where user_id = #{userId} and activity_id = #{activityId} " +
-            "and product_id = #{productId}")
-    SeckillOrder findByUserActivityProduct(@Param("userId") Long userId,
-                                           @Param("activityId") Long activityId,
-                                           @Param("productId") Long productId);
+    @Select("SELECT * FROM seckill_order WHERE user_id = #{userId} AND activity_id = #{activityId} AND product_id = #{productId}")
+    SeckillOrder findByUserActivityProduct(@Param("userId") Long userId, @Param("activityId") Long activityId, @Param("productId") Long productId);
 
-    @Update("update seckill_order set status = #{status} where id = #{id}")
-    int updateStatus(@Param("id") Long id, @Param("status") Integer status);
+    @Select("SELECT * FROM seckill_order WHERE user_id = #{userId}")
+    List<SeckillOrder> selectByUserId(Long userId);
 }

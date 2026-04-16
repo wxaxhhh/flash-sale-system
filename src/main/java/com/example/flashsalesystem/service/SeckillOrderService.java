@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -14,29 +15,34 @@ public class SeckillOrderService {
     @Autowired
     private SeckillOrderMapper seckillOrderMapper;
 
-    @CacheEvict(value="sos",allEntries=true)
+    @CacheEvict(value = "orders", key = "#order.userId + '-' + #order.activityId + '-' + #order.productId")
     public void add(SeckillOrder order) {
         seckillOrderMapper.insert(order);
     }
-    @Cacheable(value="sos")
-    public SeckillOrder findById(Long id) {
-        return seckillOrderMapper.findById(id);
-    }
-    @Cacheable(value="sos")
-    public List<SeckillOrder> findByUserId(Long userId) {
-        return seckillOrderMapper.findByUserId(userId);
-    }
-    @CacheEvict(value="sos",allEntries=true)
-    public int updateStatus(Long id, Integer status) {
-        return seckillOrderMapper.updateStatus(id, status);
+
+    @Cacheable(value = "orders", key = "#userId + '-' + '#activityId' + '-' + #productId")
+    public SeckillOrder findByUserActivityProduct(Long userId, Long activityId, Long productId) {
+        return seckillOrderMapper.findByUserActivityProduct(userId, activityId, productId);
     }
 
-    // ========== 你来写 ==========
-    // public SeckillOrder findByUserActivityProduct(Long userId, Long activityId, Long productId) {
-    //     // 调用 mapper 查询，防止重复秒杀
-    // }
-    @Cacheable(value="sos")
-    public SeckillOrder findByUserActivityProduct(Long userId,Long activityId,Long productId) {
-        return seckillOrderMapper.findByUserActivityProduct(userId,activityId,productId);
+    public SeckillOrder findById(Long orderId) {
+        return seckillOrderMapper.selectById(orderId);
+    }
+
+    @CacheEvict(value = "orders", allEntries = true)
+    public void update(SeckillOrder order) {
+        seckillOrderMapper.updateById(order);
+    }
+
+    public List<SeckillOrder> findByUserId(Long userId) {
+        return seckillOrderMapper.selectByUserId(userId);
+    }
+
+    public void updateStatus(Long id, Integer status) {
+        SeckillOrder order = seckillOrderMapper.selectById(id);
+        if (order != null) {
+            order.setStatus(status);
+            seckillOrderMapper.updateById(order);
+        }
     }
 }

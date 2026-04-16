@@ -40,8 +40,8 @@ public class SeckillOrderConsumer implements RocketMQListener<Map<String, Object
             Map<String, Object> delayMsg = new HashMap<>();
             delayMsg.put("orderId", order.getId());
             delayMsg.put("productId", productId);
-            mqProducer.sendDelay("order_timeout_topic", delayMsg, 16);
-            System.out.println("延迟消息发送成功（30分钟后检查）");
+            mqProducer.sendDelay("order_timeout_topic", delayMsg, 2); // 2 = 5秒，测试用
+            System.out.println("延迟消息发送成功（5秒后检查）");
             System.out.println("===================================\n");
 
         } catch (Exception e) {
