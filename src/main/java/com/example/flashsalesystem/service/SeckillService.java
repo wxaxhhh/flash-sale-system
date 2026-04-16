@@ -1,4 +1,5 @@
 package com.example.flashsalesystem.service;
+import com.example.flashsalesystem.MQProducer;
 import com.example.flashsalesystem.entity.SeckillOrder;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,8 @@ public class SeckillService {
     private StringRedisTemplate redisTemplate;
     @Autowired
     private RedissonClient redissonClient;
+    @Autowired
+    private MQProducer mqProducer;
 
     @Autowired
     private static final String LUA_SCRIPT =
@@ -71,17 +74,19 @@ public class SeckillService {
                             result.put("status", "fail");
                             result.put("msg", "库存不足");
                             return result;
-                        }else {
-                            SeckillOrder seckillOrder = new SeckillOrder();
-                            seckillOrder.setActivityId(activityId);
-                            seckillOrder.setUserId(userId);
-                            seckillOrder.setProductId(productId);
-                            seckillOrderService.add(seckillOrder);
+                        } else {
+                            // 组装订单消息，发送给 RocketMQ，异步处理
+                            Map<String, Object> orderMsg = new HashMap<>();
+                            orderMsg.put("userId", userId);
+                            orderMsg.put("activityId", activityId);
+                            orderMsg.put("productId", productId);
+
+                            mqProducer.sendObject("seckill_order_topic", orderMsg);
+
                             result.put("code", 200);
                             result.put("status", "success");
-                            result.put("orderId", seckillOrder.getId());
+                            result.put("msg", "下单请求已接收，正在处理");
                             System.out.println(Thread.currentThread().getName() + " 释放锁");
-
                         }
                     }
                 }
